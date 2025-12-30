@@ -15,7 +15,7 @@ const StudioHeader = (props) => {
 
         <Logo className="text-white" />
         <p className="hidden md:inline-flex text-sm">
-          Admin Studio for SHOPPERS Online Shopping
+          Admin Studio for AD7STORE Online Shopping
         </p>
       </div>
       {props.renderDefault(props)}
