@@ -1,41 +1,57 @@
 import { ProductData } from "@/types";
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
 
 export const POST = async (request: NextRequest) => {
-  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
-
   try {
     const reqBody = await request.json();
-    const { items, email } = await reqBody;
+    const { items, email, address, phone } = reqBody;
 
-    const extractingItems = await items.map((item: ProductData) => ({
-      quantity: item?.quantity,
-      price_data: {
-        currency: "usd",
-        unit_amount: Math.round(item.price * 100),
-        product_data: {
-          name: item?.title,
-          description: item?.description,
-          //   images: item?.image,
-        },
-      },
+    if (!items || items.length === 0) {
+      return NextResponse.json(
+        { message: "No items in order" },
+        { status: 400 }
+      );
+    }
+
+    // Calculate total
+    const orderItems = items.map((item: ProductData) => ({
+      title: item.title,
+      price: item.price,
+      quantity: item.quantity,
+      subtotal: item.price * item.quantity,
     }));
-    const origin = request.headers.get("origin");
 
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ["card"],
-      line_items: extractingItems,
-      mode: "payment",
-      success_url: `${origin}/success/?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${origin}/cancel/?canceled=true`,
-      metadata: {
+    const totalAmount = orderItems.reduce(
+      (sum, item) => sum + item.subtotal,
+      0
+    );
+
+    // Example order object (save this in DB later)
+    const order = {
+      id: crypto.randomUUID(),
+      items: orderItems,
+      totalAmount,
+      paymentMethod: "CASH_ON_DELIVERY",
+      customer: {
         email,
+        phone,
+        address,
       },
-    });
+      status: "PENDING",
+      createdAt: new Date(),
+    };
 
-    return NextResponse.json({ url: session.url });
+    // TODO: Save order to database (MongoDB, Prisma, Firebase, etc.)
+
+    return NextResponse.json({
+      success: true,
+      message: "Order placed successfully",
+      order,
+    });
   } catch (error) {
-    return NextResponse.json({ error: error }, { status: 500 });
+    return NextResponse.json(
+      { message: "Failed to place order", error },
+      { status: 500 }
+    );
   }
 };
