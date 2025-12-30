@@ -11,7 +11,7 @@ const Logo = ({ className }: { className?: string }) => {
           className
         )}
       >
-        shoppers
+        AD7STORE
         <span className="absolute w-full h-px bg-darkOrange inline-block left-0 bottom-0 -translate-x-[110%] group-hover:translate-x-0 duration-300" />
       </h1>
     </Link>
